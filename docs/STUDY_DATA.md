@@ -53,6 +53,21 @@ Python 3.9+ is sufficient; no packages are required. Use a new output folder eac
 
 Repeated submissions are deduplicated by participant ID + record type + record ID, using the latest export timestamp. Do not change the phone’s date/time during the study; export ordering uses its wall clock. A later export does not remove records previously received if the participant has since deleted their local journal. Researcher deletion requests must therefore be handled separately. Raw motivation strings are preserved apart from CSV escaping and a leading apostrophe for strings that could be interpreted as spreadsheet formulas. CSV parsers correctly handle quoted commas, newlines, and Unicode.
 
+## Statistics report (rerun any time)
+
+To refresh the numbers as more people use the app, sign in once with `gcloud auth login`, then run from the project root:
+
+```sh
+scripts/study-report.sh              # defaults to project intentional-1c8bd
+scripts/study-report.sh OTHER_PROJECT_ID
+```
+
+It runs the download, aggregation, and `scripts/report-study.py` in sequence and **replaces** `study-exports/` and `study-results/` each time, so those folders always hold the latest data. The new data is built in temporary folders and swapped in only after the download and aggregation succeed; a failed run keeps the previous folders. Copy a folder elsewhere first if you want to keep a snapshot. Open `study-results/report.md` for the overview, opening funnel, per-app figures, time used vs selected, paired relaxation change and rating distribution, fulfilment, daily activity, and a per-installation table. Demo records are excluded; free-text motivations and extension reasons are not copied into the report. To rebuild only the report, delete `study-results/report.md` and run `python3 scripts/report-study.py study-results` (it refuses to overwrite an existing report).
+
+The report shortens installation IDs but is still participant data: both folder patterns are gitignored, so keep reports out of git and share them only privately.
+
+To remove a test or demo installation from the database, delete both `intentionalStudyParticipants/{uid}` and `intentionalStudyParticipants/{uid}/intentionalStudyExports/latest` (Firestore does not cascade deletes), then uninstall or clear data on that phone, or it will upload again.
+
 ## Verify on study phones
 
 Try direct and Intentional-initiated openings, declining the opening prompt, finishing early, and extending. Confirm one guided launch is not double-counted. Check notice acknowledgment, automatic updates to `latest`, no unchanged uploads, the cooldown across restart, offline retry, and reboot persistence. Download twice into separate folders and aggregate: counts should not double. A running/paused session should have blank after-rating until answered or timed out. Confirm old journals still load and reinstalling changes the participant ID. Background scheduling, Firebase rules, and accessibility behavior need on-device/emulator verification.
